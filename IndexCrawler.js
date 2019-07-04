@@ -9,20 +9,25 @@ main()
 
  function main(){
   //https://dl.musicbazz.ir/
-   if(!fs.existsSync('Files')) fs.mkdirSync('Files')
+   if(!fs.existsSync('WebSites')) fs.mkdirSync('WebSites')
 
   var link = readline.question("Enter Your Site Index : ");
-  GetAllLinks(link)
+  var domain = readline.question('Enter Domain : ')
+
+  if(!fs.existsSync('WebSites/' + domain)) fs.mkdirSync('WebSites/' + domain)
+
+  GetAllLinks(link,'WebSites/' + domain + '/')
   console.log('Crawler is Running...')
 }
 
-function GetAllLinks(url){
+function GetAllLinks(url,base){
 
     request(url, function(error, response, body) {
         if(error) {
           console.log("Error: " + error);
         }
-        if(response.statusCode === 200) {
+        
+        if(!error && response.statusCode === 200) {
           var $ = cheerio.load(body);
 
           $('a').each(function(i,e){
@@ -32,12 +37,13 @@ function GetAllLinks(url){
 
                 if(element.endsWith('/') || element.endsWith('.') || element.endsWith('>')){
                  delay(500)
-                 GetAllLinks(encodeURI(url + element))
+                 GetAllLinks(encodeURI(url + element),base)
+                 delay(500)
                 }
                 else{       
-                     if(fs.existsSync('Files/' + element.split('.').pop() + '.json')){
+                     if(fs.existsSync(base + element.split('.').pop() + '.json')){
                      
-                      let data = fs.readFileSync('Files/' + element.split('.').pop() + '.json','utf-8')
+                      let data = fs.readFileSync(base + element.split('.').pop() + '.json','utf-8')
                       
                       let list = JSON.parse(data.toString())
                       //console.log(list)
@@ -45,11 +51,11 @@ function GetAllLinks(url){
                             
                       list.Links.push({"element":url + element})
 
-                     fs.writeFileSync('Files/'+element.split('.').pop() + '.json',JSON.stringify(list))
+                     fs.writeFileSync(base + element.split('.').pop() + '.json',JSON.stringify(list))
                       
                      }
                      else
-                     fs.writeFileSync('Files/' + element.split('.').pop() + '.json'
+                     fs.writeFileSync(base + element.split('.').pop() + '.json'
                         ,JSON.stringify({"Type":element.split('.').pop()
                           ,"Links":[{"element":url + element}]}))           
                 }
